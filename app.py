@@ -1,6 +1,7 @@
+import os
 import string
 import random
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 
 
@@ -37,16 +38,27 @@ def home():
   if request.method == "POST":
     url_received = request.form["nm"]
     found_url = Urls.query.filter_by(long=url_received).first()
+    
+
     if found_url:
-     return f"{found_url.short}"
+     return redirect(url_for("display_short_url", url=found_url.short))
     else:
       short_url = shorten_url()
       new_url = Urls(url_received, short_url)
       db.session.add(new_url)
       db.session.commit()
-      return short_url
+      return redirect(url_for("display_short_url", url=short_url))
   else:
-    return render_template("home.html")
+    return render_template('url_page.html')
+
+@app.route('/display/<url>')
+def display_short_url(url):
+    return render_template('shorturl.html', short_url_display=url)
+
+@app.route('/all_urls')
+def display_all():
+    return render_template('all_urls.html', vals=Urls.query.all())
+
       
 
 if __name__ == '__main__':
